@@ -13,7 +13,7 @@ const diskUtils = require('./diskUtils');
 const fetchDataForOneStock = (ticker) => new Promise((resolve, reject) => {
   
   log('Getting: ', '\x1b[34m', ticker, '\x1b[0m');
-
+  let diskData;
   const queryString = {
     apikey: config.API_KEY,
     function: 'TIME_SERIES_DAILY',
@@ -22,7 +22,7 @@ const fetchDataForOneStock = (ticker) => new Promise((resolve, reject) => {
   };
 
   try {
-    diskUtils.readStockDataFromDisk(ticker);
+    diskData = diskUtils.readStockDataFromDisk(ticker).data;
   } catch (e) {
     // If we have no data for this ticker, retrieve complete history.
     if (e.code === 'ENOENT') {
@@ -43,11 +43,11 @@ const fetchDataForOneStock = (ticker) => new Promise((resolve, reject) => {
   .then(parsedData => {
     console.log(`Retrieved ${parsedData.length} entries for ${ticker}.`)
     // Append to data stored locally.
-    diskUtils.writeStockDataToDisk(ticker, parsedData);
+    diskData = diskUtils.writeStockDataToDisk(ticker, parsedData, diskData);
 
     // Store clean data for this stock for processing.
     data.quotes[ticker] = {};
-    data.quotes[ticker]['data'] = parsedData;
+    data.quotes[ticker]['data'] = diskData;
 
     // Mark pivot highs and lows.
     markAllPivots(data.quotes[ticker]['data'], ticker);

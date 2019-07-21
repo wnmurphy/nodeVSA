@@ -25,7 +25,7 @@ function readStockDataFromDisk(ticker) {
 }
 
 
-function writeStockDataToDisk(ticker, data) {
+function writeStockDataToDisk(ticker, data, existingData) {
   
   initDataFolder();
 
@@ -44,25 +44,24 @@ function writeStockDataToDisk(ticker, data) {
     try {
       fs.writeFileSync(filePath, stringifiedData);
       console.log(`Wrote data to disk for ${ticker}`);
+      return data;
     } catch (err) {
       console.log(`Error creating new file for ${ticker}: `, err);
     }
-  }
-
+  } 
   // Otherwise, we're appending data to existing file.
-  try {
-    const existingDataFromDisk = readStockDataFromDisk(ticker);
-    writeObject.data = existingDataFromDisk.data.concat(data);
+  else {
+    const updatedData = existingData.concat(data);
+    writeObject.data = updatedData;
     const stringifiedData = JSON.stringify(writeObject);
     console.log(`File for ${ticker} exists. Updating...`);
     try {
       fs.writeFileSync(filePath, stringifiedData);
       console.log(`Updated data on disk for ${ticker}`);
+      return updatedData;
     } catch (err) {
       console.log(`Error updating existing data for ${ticker}: `, err);
     }    
-  } catch (err) {
-    console.log(`Error reading existing data for ${ticker}: `, err);
   }
 }
 

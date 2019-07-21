@@ -5,7 +5,7 @@ function createThrottle(series, timeout) {
   let delay = 0;
 
   return () => {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       if (--seriesCounter <= 0) {
         delay += timeout;
         seriesCounter = series;

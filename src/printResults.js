@@ -1,6 +1,6 @@
 const log = console.log;
 
-function printResults (arr) {
+function printResults (results) {
 
   function pad (toPad, len) {
     let input = String(toPad);
@@ -24,31 +24,30 @@ function printResults (arr) {
     'oplvDate: '
   );
 
-
   let long = 0, short = 0, weightedLong = 0, weightedShort = 0;
 
-  for (let i = 0; i < arr.length; i++) {
+  for (const result of results) {
     log(
-      `${pad(arr[i].symbol, 6)} | ` +
-      `${arr[i].date} | ` +
-      `${pad(arr[i].trade, 6)} | ` +
-      `${arr[i].priorHitsCount} | ` +
-      `${arr[i].recentHitsCount} | ` +
-      `${arr[i].recentHitsOnGreaterVolumeCount} | ` +
-      `${arr[i].absorptionVolume} | ` +
-      `${arr[i].allRecentHitsDecreasing} | ` +
-      `${arr[i].belowAvgVol} | ` +
-      `${arr[i].outerPivotOnLowerVolume} | ` + 
-      `${arr[i].outerPivotOnLowerVolumeDate}`
+      `${pad(result.symbol, 6)} | ` +
+      `${result.date} | ` +
+      `${pad(result.trade, 6)} | ` +
+      `${result.priorHitsCount} | ` +
+      `${result.recentHitsCount} | ` +
+      `${result.recentHitsOnGreaterVolumeCount} | ` +
+      `${result.absorptionVolume} | ` +
+      `${result.allRecentHitsDecreasing} | ` +
+      `${result.belowAvgVol} | ` +
+      `${result.outerPivotOnLowerVolume} | ` + 
+      `${result.outerPivotOnLowerVolumeDate}`
     );
     
-    if (arr[i].trade === 'long') {
-      weightedLong += arr[i].recentHitsOnGreaterVolumeCount;
+    if (result.trade === 'long') {
+      weightedLong += result.recentHitsOnGreaterVolumeCount;
       long++;
     }
 
-    if (arr[i].trade === 'short'){ 
-      weightedShort += arr[i].recentHitsOnGreaterVolumeCount;
+    if (result.trade === 'short'){ 
+      weightedShort += result.recentHitsOnGreaterVolumeCount;
       short++; 
     }
   }

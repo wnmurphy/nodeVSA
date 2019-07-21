@@ -36,11 +36,11 @@ const printToScreen = require('./src/printResults.js');
 const writeToCsv = require('./src/writeCSV.js');
 const throttle = createThrottle(1, 1900);
 const log = console.log;
-let data = require('./src/stockData.js');
+const data = require('./src/stockData.js');
 
 // Date is passed in from command line in format 'YYYY-MM-DD'.
 // The filter string is evaluated in filterResults.js
-const filter = [
+const filter = process.argv[2] ? [
   'signal.recentHitsOnGreaterVolumeCount === signal.recentHitsCount',
   'signal.recentHitsCount > 0',
   'signal.absorptionVolume === true',
@@ -48,34 +48,41 @@ const filter = [
   'signal.allRecentHitsDecreasing === true',
   'signal.outerPivotOnLowerVolume === true',
   'signal.date === process.argv[2]'
-].join(' && ');
+].join(' && ') : undefined;
 
 (function() {
+
   // Create an array containing a promise for each ticker request.
   // Adds rate-limiting per data source's request; < 200 requests per minute
   // Requests get individual catch blocks, so if one fails the rest can continue.
-  const tickerRequests = tickers.map(ticker => throttle().then(() => fetchStock(ticker)).catch(e => e));
+  const tickerRequests = tickers.map(async (ticker) => {
+    try {
+      await throttle();
+      return await fetchStock(ticker);
+    } catch (err) {
+      log(err);
+    }
+  });
 
   Promise.all(tickerRequests)
-    .then(()=>{
+    .then(() => {
       log(`\n\x1b[31m Fetch complete. \x1b[0m`);
-      log('Retries', data.retries);
+      log('Retries: ', data.retries);
     })
-    .then(()=>{
-      if(data.retries.length) {
-        const retryRequests = data.retries.map(ticker => fetchStock(ticker));
+    .then(() => {
+      if (data.retries.length) {
+        const retryRequests = data.retries.map(ticker => fetchStock(ticker).catch(e => log(e)));
+        // const retries = retryRequests.map(p => p.catch(err => null))
         // Adds individual catch for each retry, and sets null value so rest can continue if retry also results in error.
-        return Promise.all(retryRequests.map(p => p.catch(err => null)));
+        return Promise.all(retryRequests);
       }
     })
-    .then(()=>{
+    .then(() => { 
       log('\n\x1b[31m' + 'Retries complete.' + '\x1b[0m');
-    })
-    .then(()=>{ 
       
       let results;
       
-      if(process.argv[2]) {
+      if (filter) {
         results = filterResults(filter);
       } 
       else {
@@ -83,7 +90,7 @@ const filter = [
         log('\n\x1b[31m' + 'No search filter provided. All results: ' + '\x1b[0m' + '\n');
       }
 
-      if(results.length) {
+      if (results.length) {
         log('\n\x1b[31m' + 'Search Results:' + '\x1b[0m');
         printToScreen(results);
         writeToCsv(results);
@@ -103,8 +110,8 @@ const filter = [
 // Helper functions.
 function every(arr, filter) {
   let result = true;
-  for (let i = 0; i < arr.length; i ++) {
-    if (filter(arr[i]) === false) {
+  for (const element of arr) {
+    if (filter(element) === false) {
       result = false;
     }
   }

@@ -1,9 +1,17 @@
+/**
+  Calculates the percentage float turnover for a stock since a given date.
+  Takes a ticker, a total float number, and a calculation start date.
+  Accumulates the daily volume since the start date, returns the percentage of float
+  turnover since that date.
+  
+  Example usage: node float GPRO 77930000 2017-01-04
+*/
 const log = console.log;
 const rp = require('request-promise');
 const config = require('./config.js')
-const transformData = require('./src/transformData.js');
+const parseRawData = require('./src/parseRawData.js');
 
-// ex usage: node float GPRO 77930000 2017-01-04
+
 const ticker = process.argv[2];
 const totalFloat = parseInt(process.argv[3]);
 const startDate = process.argv[4];
@@ -19,8 +27,8 @@ const fetchDataForOneStock = (ticker) => new Promise((resolve, reject) => {
       symbol: ticker,
       outputsize: 'full'
     },
-    transform: transformData // Clean up the raw data.
-  }).then((transformedData) => {
+    transform: parseRawData
+  }).then(transformedData => {
     resolve(transformedData);
   });
 });
@@ -34,12 +42,13 @@ const getFloatTurnovers = (volByDate, totalFloat, startDate) => {
     }
   }
   function calculateCycles(volByDate, totalFloat) {
-    let remainingFloatInCycle = totalFloat;
-    let turnoverDates = [];
-    let results = {
-      'floatRemaining': null,
-      'turnovers': null
+    const turnoverDates = [];
+    const results = {
+      percentFloatRemaining: null,
+      floatRemaining: null,
+      turnovers: null
     };
+    let remainingFloatInCycle = totalFloat;
     for(let j = 0; j < volByDate.length; j++) {
       remainingFloatInCycle = remainingFloatInCycle - volByDate[j][1];  
       // If we've found a turnover date, add to list and reset count.
@@ -51,6 +60,7 @@ const getFloatTurnovers = (volByDate, totalFloat, startDate) => {
       if(j === volByDate.length-1) {
         results.floatRemaining = remainingFloatInCycle;
         results.turnovers = turnoverDates;
+        results.percentFloatRemaining = (remainingFloatInCycle / totalFloat) * 100;
       }
     }
     return results;
@@ -59,11 +69,11 @@ const getFloatTurnovers = (volByDate, totalFloat, startDate) => {
 
 fetchDataForOneStock(ticker)
   .then((transformedData) => {
-    let volumeByDate = transformedData.map((day) => {
+    const volumeByDate = transformedData.map((day) => {
       return [day.date, day.v];
     });
     return volumeByDate;
   }).then((volumeByDate) => {
-    let result = getFloatTurnovers(volumeByDate, totalFloat, startDate);
+    const result = getFloatTurnovers(volumeByDate, totalFloat, startDate);
     log(result);
   });

@@ -1,0 +1,188 @@
+# notes
+
+
+## Analysis Findings:
+
+- With a sample size of 892 results (438 long, and 454 short), my script correctly predicts if the next day's close will be higher or lower:
+  - 78.31 % of the time for long positions.
+  - 74.45 % of the time for short positions.
+  - 76.34 % overall.
+
+- For long positions but not short positions, the probability increases with the number of prior hits for a result.
+
+- 1-hit results are still 76% predictive, so they should not be dismissed.
+
+- Since the probability is close for both long and short positions, these results are likely not confounded by the bull market.
+
+
+## Default Config
+
+```
+node nodeVSA "signal.recentHitsOnGreaterVolumeCount === signal.recentHitsCount && signal.recentHitsCount > 0 && signal.absorptionVolume === true && signal.belowAvgVol === true && signal.allRecentHitsDecreasing === true && signal.date === '2017-07-06' && signal.outerPivotOnLowerVolume === true"
+```
+
+## Lessons learned:
+  - If you're getting no results, double check the names of your search criteria variables.
+  - After 503 Maintenance, I was getting no results, without getting "no results" message. This conditional wasn't executing. It turns out that the problem was an escape backslash in the CL argument. I took out all slashes and it worked fine.
+  - If there isn't enough historical data for a particular date, it will print "No results." This could be updated to check the data first.
+  - If you need OHLCV data for the day of the signal, it's in signal.data.open, signal.data.close, etc.
+  - If you're getting random "TypeError - Reduce called with initial empty array", it's because the service is randomly sending back empty request bodies. I have checked this against older commits, and it's them, not me.
+
+
+## SPY Hypothesis:
+
+  Major movements of SPY consistently correlates with extreme long:short ratios on the preceding day.
+  
+  Idea: create a ratio score, which takes into account multiple pivots at same level
+
+  Disproven. Tracked this in a spreadsheet, and the correlation between script results and next-day SPY performance was 0.2539. Minimum critical value for the degrees of freedom is 0.337, for there to be less than a 1 in 10 chance the correlation is totally due to chance.
+
+  In fact, I stupidly bet 20% of my capital on this hypothesis, right as the market had a correction. I cut my losses, but lesson learned. No correlation, and keep your positions to 10%.
+
+## Future Analysis
+
+I'd like to add a flag for "current day is a higher/lower high/low, on lower volume," and then perform a probabilistic analysis for that signal. I'm guessing it would jump up to 85% predictive or so.
+
+
+
+## Google Sheets analysis
+
+### Long:
+
+76.07%  What percentage of the time does 1 hit result in a higher close the next day?
+86.42%  What percentage of the time does 2 hits result in a higher close the next day?
+100.00% What percentage of the time does 3+ hits result in a higher close the next day?
+78.31%  Overall predictive success of script for long positions.
+
+-0.43%  Avg loss when wrong on a long position with 1 hit, 1 out of 4 trades
+0.99%   Avg gain when right on a long position with 1 hit, 3 out of 4 trades
+-0.32%  Avg loss when wrong on a long position with 2 hits, 1 out of 4 trades
+0.80%   Avg gain when right on a long position with 2 hits, 3 out of 4 trades
+0.00%   Avg loss when wrong on a long position with 3+ hits, 1 out of 4 trades
+0.77%   Avg gain when right on a long position with 3+ hits, 3 out of 4 trades
+-0.25%  Overall average loss (12% ex. on 2.07 option)
+0.85%   Overall average gain (41% ex. on 2.07 option)
+3.4:1 odds  
+
+### Short:
+
+75.54%  What percentage of the time does 1 hit result in a lower close the next day?
+71.05%  What percentage of the time does 2 hits result in a lower close the next day?
+60.00%  What percentage of the time does 3 hits result in a lower close the next day?
+74.45%  Overall predictive success of script for short positions.
+
+-0.36%  Avg loss when wrong on a short position with 1 hit, 1 out of 4 trades
+1.04%   Avg gain when right on a short position with 1 hit, 3 out of 4 trades
+-0.27%  Avg loss when wrong on a short position with 2 hits, 1 out of 4 trades
+0.92%   Avg gain when right on a short position with 2 hits, 3 out of 4 trades
+-0.34%  Avg loss when wrong on a short position with 3+ hits, 1 out of 4 trades
+0.71%   Avg gain when right on a short position with 3+ hits, 3 out of 4 trades
+-0.32%  Overall average loss (15.4% ex. on 2.07 option)
+0.89%   Overall average gain (43% ex. on 2.07 option)
+2.8:1 odds  
+
+
+### Analysis including 0-hit days
+
+I am finding the same probability of predicting the next day's close with 0 hits as I found with 1, 2, 3+ hits. Approximately 75% no matter what. 
+
+Initially, I was disappointed that this was just the market performance; thinking the market just went up ~75% of the time. However, when I checked short positions, they matched the same ~75%, but in the opposite direction. Short results, including 0-hit results, go down the next day 75% of the time. Huh?
+
+This makes me believe that I am not testing the baseline I thought I was. I intended to compare to market performance overall, but instead I am comparing to *pivots* specifically. My program's results consist exclusively of pivot highs and lows. I believe that what I have found is that a pivot will be a true pivot ~75% of the time. ~25 of the time it will develop into a new trend.
+
+What I need in order to find the true comparison I initially sought, is a set of data for all days for all stocks: closing price and next day's close. I then need to run the overall probability that the next day's close will be higher or lower. I guess this will be approximately 50%, but skewed towards higher closes as we have been in a bull market.
+
+What this will prove, I think, is that pivots are more likely to predict the next close than random chance. Is this even useful?
+
+I think so. It would still prove or disprove a trading edge, and calculating the random average % overnight change would be useful as well. Both would be useful.
+
+1. Get daily stock data for all the S and P 500 stocks: Ticker, Date, Close, Next Close
+2. Import to spreadsheet.
+3. 
+
+
+## Forward-looking
+
+I've just noticed that results from last Friday have changed (I'm checking them again on Monday). 8-18-17, and IDXX is no longer listed as a result. I don't believe I've changed anything. I think this is caused by the conditional in markAllPivots, where a pivot is defined as being lower than both the preceding day and the following day. If there is no following day, it only looks at the preceding day. I believe that when a new day is printed, it retroactively erases some results. 
+
+My backtesting bakes in forward-looking information. For the historical trade set, all trades that went the wrong way (turning into a new countertrend rather than a pivot) have been removed because they no longer fit the definition of a pivot. If I expect the same success rate of the daily results, I will be wrong.
+
+The way to test is to track results day-by-day.
+
+
+
+
+
+
+
+ABBV   | 2017-08-21 | short  | 2 | 1 | 1 | true | true | true
+AES    | 2017-08-21 | short  | 3 | 2 | 2 | true | true | true
+AMAT   | 2017-08-21 | long   | 2 | 1 | 1 | true | true | true
+ALLE   | 2017-08-21 | long   | 1 | 1 | 1 | true | true | true
+ANTM   | 2017-08-21 | short  | 4 | 2 | 2 | true | true | true
+AWK    | 2017-08-21 | short  | 5 | 3 | 3 | true | true | true
+BIIB   | 2017-08-21 | long   | 2 | 2 | 2 | true | true | true
+BCR    | 2017-08-21 | short  | 3 | 2 | 2 | true | true | true
+CCL    | 2017-08-21 | short  | 1 | 1 | 1 | true | true | true
+CERN   | 2017-08-21 | short  | 2 | 1 | 1 | true | true | true
+CMCSA  | 2017-08-21 | short  | 1 | 1 | 1 | true | true | true
+CME    | 2017-08-21 | long   | 1 | 1 | 1 | true | true | true
+CNC    | 2017-08-21 | short  | 1 | 1 | 1 | true | true | true
+COO    | 2017-08-21 | short  | 2 | 1 | 1 | true | true | true
+CSX    | 2017-08-21 | long   | 1 | 1 | 1 | true | true | true
+DHI    | 2017-08-21 | long   | 2 | 2 | 2 | true | true | true
+DIS    | 2017-08-21 | long   | 1 | 1 | 1 | true | true | true
+EFX    | 2017-08-21 | long   | 4 | 1 | 1 | true | true | true
+FFIV   | 2017-08-21 | long   | 1 | 1 | 1 | true | true | true
+HPE    | 2017-08-21 | long   | 2 | 1 | 1 | true | true | true
+IR     | 2017-08-21 | long   | 1 | 1 | 1 | true | true | true
+JWN    | 2017-08-21 | long   | 1 | 1 | 1 | true | true | true
+MA     | 2017-08-21 | short  | 1 | 1 | 1 | true | true | true
+MAA    | 2017-08-21 | short  | 2 | 1 | 1 | true | true | true
+MDLZ   | 2017-08-21 | long   | 5 | 1 | 1 | true | true | true
+PG     | 2017-08-21 | short  | 1 | 1 | 1 | true | true | true
+PLD    | 2017-08-21 | short  | 1 | 1 | 1 | true | true | true
+RCL    | 2017-08-21 | short  | 1 | 1 | 1 | true | true | true
+RSG    | 2017-08-21 | long   | 4 | 1 | 1 | true | true | true
+SCG    | 2017-08-21 | long   | 2 | 2 | 2 | true | true | true
+ROP    | 2017-08-21 | long   | 5 | 1 | 1 | true | true | true
+SIG    | 2017-08-21 | long   | 1 | 1 | 1 | true | true | true
+TGT    | 2017-08-21 | long   | 2 | 1 | 1 | true | true | true
+TGT    | 2017-08-21 | short  | 2 | 1 | 1 | true | true | true
+TROW   | 2017-08-21 | long   | 2 | 2 | 2 | true | true | true
+TSCO   | 2017-08-21 | short  | 3 | 1 | 1 | true | true | true
+VTR    | 2017-08-21 | long   | 2 | 1 | 1 | true | true | true
+VTR    | 2017-08-21 | short  | 2 | 1 | 1 | true | true | true
+WM     | 2017-08-21 | short  | 2 | 2 | 2 | true | true | true
+
+Next day:
+BIIB   | 2017-08-21 | long   | 2 | 2 | 2 | true | true | true
+CME    | 2017-08-21 | long   | 1 | 1 | 1 | true | true | true
+CSX    | 2017-08-21 | long   | 1 | 1 | 1 | true | true | true
+DIS    | 2017-08-21 | long   | 1 | 1 | 1 | true | true | true
+DVA    | 2017-08-21 | long   | 1 | 1 | 1 | true | true | true
+FFIV   | 2017-08-21 | long   | 1 | 1 | 1 | true | true | true
+EFX    | 2017-08-21 | long   | 4 | 1 | 1 | true | true | true
+HCA    | 2017-08-21 | long   | 2 | 2 | 2 | true | true | true
+HPE    | 2017-08-21 | long   | 2 | 1 | 1 | true | true | true
+IR     | 2017-08-21 | long   | 1 | 1 | 1 | true | true | true
+JWN    | 2017-08-21 | long   | 1 | 1 | 1 | true | true | true
+MDLZ   | 2017-08-21 | long   | 5 | 1 | 1 | true | true | true
+KMB    | 2017-08-21 | long   | 1 | 1 | 1 | true | true | true
+ROP    | 2017-08-21 | long   | 5 | 1 | 1 | true | true | true
+SRCL   | 2017-08-21 | long   | 1 | 1 | 1 | true | true | true
+TROW   | 2017-08-21 | long   | 2 | 2 | 2 | true | true | true
+WEC    | 2017-08-21 | short  | 1 | 1 | 1 | true | true | true
+
+22 results were retroactively removed. 
+This is why I consistently had a 75% predictive rate.
+
+
+
+## Adding scan for a higher high on lower volume
+
+I want to have the ability to scan for stocks where a pivot is higher but the volume is lower.
+I already have a value for allRecentHitsDecreasing.
+If this value is true, then I know the current pivot has lower volume.
+I just need to add a check for:
+  allRecentHitsDecreasing === true && pivotsArr[i]['h'] > {prior pivot}['h']

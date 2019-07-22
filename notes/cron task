@@ -1,0 +1,21 @@
+* * * * *  command to execute
+│ │ │ │ │
+│ │ │ │ └─── day of week (0 - 6) (0 to 6 are Sunday to Saturday, or use names; 7 is Sunday, the same as 0)
+│ │ │ └──────── month (1 - 12)
+│ │ └───────────── day of month (1 - 31)
+│ └────────────────── hour (0 - 23)
+└─────────────────────── min (0 - 59)
+
+
+
+Execute at 12:45pm on workdays:
+
+45 12 * * 1-5 node nodeVSA "signal.recentHitsOnGreaterVolumeCount === signal.recentHitsCount && signal.recentHitsCount > 0 && signal.absorptionVolume === true && signal.belowAvgVol === true && signal.allRecentHitsDecreasing === true && signal.date === '2017-10-10' && signal.outerPivotOnLowerVolume === true"
+
+
+45 12 * * 1-5 node nodeVSA "signal.recentHitsOnGreaterVolumeCount === signal.recentHitsCount && signal.recentHitsCount > 0 && signal.absorptionVolume === true && signal.belowAvgVol === true && signal.allRecentHitsDecreasing === true && signal.date === '${date +%Y-%m-%d}' && signal.outerPivotOnLowerVolume === true"
+
+date +%Y-%m-%d
+
+
+`tail -1 ${filepath}_newstap.sh`

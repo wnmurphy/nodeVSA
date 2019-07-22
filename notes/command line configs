@@ -1,0 +1,10 @@
+// Bread and butter scan
+node nodeVSA "signal.date === '2017-07-06' \
+&& signal.recentHitsOnGreaterVolumeCount === signal.recentHitsCount \
+&& signal.recentHitsCount > 0 \
+&& signal.absorptionVolume === true \
+&& signal.allRecentHitsDecreasing === true \
+&& signal.belowAvgVol === true"
+
+
+node nodeVSA "signal.recentHitsOnGreaterVolumeCount === signal.recentHitsCount && signal.recentHitsCount > 0 && signal.absorptionVolume === true && signal.belowAvgVol === true && signal.allRecentHitsDecreasing === true && signal.outerPivotOnLowerVolume === true && signal.date === '2019-03-20'"

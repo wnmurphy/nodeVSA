@@ -1,0 +1,84 @@
+MCD
+
+
+
+
+
+
+
+
+
+
+
+
+====
+
+After refactor
+AMGN   | 2017-08-24 | long   | 1 | 1 | 1 | true | true | true | true | 2017-08-10
+AON    | 2017-08-24 | long   | 1 | 1 | 1 | true | true | true | true | 2017-08-03
+AVY    | 2017-08-24 | long   | 2 | 2 | 2 | true | true | true | true | 2017-08-04
+BSX    | 2017-08-24 | long   | 2 | 2 | 2 | true | true | true | true | 2017-08-22
+CINF   | 2017-08-24 | long   | 1 | 1 | 1 | true | true | true | true | 2017-08-21
+EMR    | 2017-08-24 | long   | 1 | 1 | 1 | true | true | true | true | 2017-06-29
+FDX    | 2017-08-24 | long   | 3 | 3 | 3 | true | true | true | true | 2017-08-01
+GE     | 2017-08-24 | long   | 1 | 1 | 1 | true | true | true | true | 2017-08-21
+FMC    | 2017-08-24 | long   | 1 | 1 | 1 | true | true | true | true | 2017-08-08
+KO     | 2017-08-24 | long   | 3 | 3 | 3 | true | true | true | true | 2017-08-09
+NWL    | 2017-08-24 | long   | 1 | 1 | 1 | true | true | true | true | 2017-08-22
+TXT    | 2017-08-24 | long   | 2 | 2 | 2 | true | true | true | true | 2017-08-11
+
+Before refactor
+AMGN   | 2017-08-24 | long   | 1 | 1 | 1 | true | true | true | true | 2017-08-10
+AON    | 2017-08-24 | long   | 1 | 1 | 1 | true | true | true | true | 2017-08-03
+AVY    | 2017-08-24 | long   | 2 | 2 | 2 | true | true | true | true | 2017-08-04
+BSX    | 2017-08-24 | long   | 2 | 2 | 2 | true | true | true | true | 2017-08-22
+CINF   | 2017-08-24 | long   | 1 | 1 | 1 | true | true | true | true | 2017-08-21
+EMR    | 2017-08-24 | long   | 1 | 1 | 1 | true | true | true | true | 2017-06-29
+FDX    | 2017-08-24 | long   | 3 | 3 | 3 | true | true | true | true | 2017-08-01
+FMC    | 2017-08-24 | long   | 1 | 1 | 1 | true | true | true | true | 2017-08-08
+NWL    | 2017-08-24 | long   | 1 | 1 | 1 | true | true | true | true | 2017-08-22
+TXT    | 2017-08-24 | long   | 2 | 2 | 2 | true | true | true | true | 2017-08-11
+KO     | 2017-08-24 | long   | 3 | 3 | 3 | true | true | true | true | 2017-08-09
+
+
+priorHits (within range)
+recentHits (separate scan, within last 100 days)
+  why not just filter priorHits?
+recentHitsOnGreaterVolume (separate scan)
+
+
+recentHitsOnGreaterVolume is a subset of
+recentHits is a subset of
+priorHits
+
+By keeping them as three separate arrays, and by applying the range criteria to only the first one, and then by scaning only recentHits for an outerPivotOnLowerVolume, we get funny results.
+
+
+- priorHits is an array of all previous hits within 0.3 % of the current price.
+- recentHits should be priorHits, filtered for hits within the last 100 days.
+- recentHitsOnGreaterVolume should filter all recentHits for having more V than current pivot.
+
+This still doesn't have the intended effect.
+Or maybe it does.
+I think want to compare to the most recent pivot, even if it's not within range.
+But really, if it's not within range, then I don't care.
+
+
+JCI    | 2017-08-23 | short  | 1 | 1 | 1 | true | true | true
+CMS    | 2017-08-23 | short  | 1 | 1 | 1 | true | true | true
+WEC    | 2017-08-23 | short  | 1 | 1 | 1 | true | true | true
+
+FFIV   | 2017-08-23 | long   | 2 | 2 | 2 | true | true | true
+
+
+
+Add new boolean hhlv/lllv
+
+
+aph = "all prior hits". # of all historic pivots at this price level.
+rh = "recent hits". # of recent pivots at this price level.
+rhogv = "recent hits on greater volume". # of recent hits with greater volume than current pivot.
+av = "absorption volume". At some point in the last 30 trading days, there has been a buyoff/selloff, indicating transfer to/from institutions.
+rhad = "recent hits all decreasing". Volume is shrinking for all consecutive recent pivots.
+bav = "below average volume". Current day has lower volume than average.
+oplv = "outer pivot on lower volume". Current pivot is a higher high, or lower low, on lower volume than previous.

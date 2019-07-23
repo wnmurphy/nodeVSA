@@ -1,6 +1,6 @@
 const rp = require('request-promise');
 const createThrottle = require('./src/createThrottle.js')
-const throttle = createThrottle(1, 2000);
+const throttle = createThrottle(1, 4000);
 const tickers = require('./stockList.js');
 const fs = require('fs');
 const log = console.log;
@@ -26,8 +26,7 @@ const scrapeFloat = (ticker) => new Promise((resolve, reject) => {
     resolve([ticker, parseInt(float)]);
   })
   .catch(err => { 
-    log(`err: ${JSON.stringify(error)}`);
-    reject(err);
+    log(`error scraping float for ${ticker}: ${JSON.stringify(error)}`);
   })
 }); 
 

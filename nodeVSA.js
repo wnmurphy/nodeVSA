@@ -1,8 +1,8 @@
 /*
   Goal: Create a a node.js script I can run at 12:30pm to find stock trading setups.
-  
+
   The setup I'm looking for is basically what Volume Spread Analysis (VSA) calls a supply (or demand) test.
-  
+
   In English:
     1. Find a pivot low.
     2. Draw a line from the low to the left.
@@ -16,13 +16,13 @@
 
     See http://imgur.com/SHCYUgV for a chart of these two setups.
 
-  Data source: 
+  Data source:
     alphavantage.co's API @ https://www.alphavantage.co/documentation/
 
   Example URLs with query:
     'https://www.alphavantage.co/query?function=HT_PHASOR&symbol=MSFT&interval=weekly&series_type=close&apikey=demo'
     'https://www.alphavantage.co/query?&symbol=MSFT&interval=weekly&apikey=demo'
-  
+
   Notes:
     Alpha Vantage requests a call frequency limit of < 200/minute.
     A batch of ~400 calls results in 503 Service Unavailable responses.
@@ -77,14 +77,14 @@ const filter = process.argv[2] ? [
         return Promise.all(retryRequests);
       }
     })
-    .then(() => { 
+    .then(() => {
       log('\n\x1b[31m' + 'Retries complete.' + '\x1b[0m');
-      
+
       let results;
-      
+
       if (filter) {
         results = filterResults(filter);
-      } 
+      }
       else {
         results = data.allSignals;
         log('\n\x1b[31m' + 'No search filter provided. All results: ' + '\x1b[0m' + '\n');
@@ -96,9 +96,9 @@ const filter = process.argv[2] ? [
         writeToCsv(results);
 
         if(every(results, allResultsShort) || every(results, allResultsLong)) {
-          log('\n\x1b[32m' + 'All results agree. This has been a reliable signal about next trading day for the market' + '\x1b[0m');      
+          log('\n\x1b[32m' + 'All results agree. This has been a reliable signal about next trading day for the market' + '\x1b[0m');
         }
-      } 
+      }
       else {
         log('\n\x1b[31m' + 'No results.' + '\x1b[0m');
       }

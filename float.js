@@ -35,12 +35,13 @@ const fetchDataForOneStock = (ticker) => new Promise((resolve, reject) => {
 
 
 const getFloatTurnovers = (volByDate, totalFloat, startDate) => {
-  for(let i = 0; i < volByDate.length; i++) {
+  for (let i = 0; i < volByDate.length; i++) {
     // Iterate until we find the startDate, then start calculating turnover cycles.
-    if(volByDate[i][0] === startDate) {
+    if (volByDate[i][0] === startDate) {
       return calculateCycles(volByDate.slice(i), totalFloat);
     }
   }
+
   function calculateCycles(volByDate, totalFloat) {
     const turnoverDates = [];
     const results = {
@@ -49,15 +50,15 @@ const getFloatTurnovers = (volByDate, totalFloat, startDate) => {
       turnovers: null
     };
     let remainingFloatInCycle = totalFloat;
-    for(let j = 0; j < volByDate.length; j++) {
+    for (let j = 0; j < volByDate.length; j++) {
       remainingFloatInCycle = remainingFloatInCycle - volByDate[j][1];  
       // If we've found a turnover date, add to list and reset count.
-      if(remainingFloatInCycle < 0) {
+      if (remainingFloatInCycle < 0) {
         turnoverDates.push(volByDate[j][0])
         remainingFloatInCycle += totalFloat;
       }
       // If this is the last day, return remaining float and list of turnover dates.
-      if(j === volByDate.length-1) {
+      if (j === volByDate.length - 1) {
         results.floatRemaining = remainingFloatInCycle;
         results.turnovers = turnoverDates;
         results.percentFloatRemaining = (remainingFloatInCycle / totalFloat) * 100;
@@ -68,12 +69,12 @@ const getFloatTurnovers = (volByDate, totalFloat, startDate) => {
 };
 
 fetchDataForOneStock(ticker)
-  .then((transformedData) => {
-    const volumeByDate = transformedData.map((day) => {
+  .then(transformedData => {
+    const volumeByDate = transformedData.map(day => {
       return [day.date, day.v];
     });
     return volumeByDate;
-  }).then((volumeByDate) => {
+  }).then(volumeByDate => {
     const result = getFloatTurnovers(volumeByDate, totalFloat, startDate);
     log(result);
   });

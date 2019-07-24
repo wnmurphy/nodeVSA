@@ -49,10 +49,13 @@ const getFloatTurnovers = (volByDate, totalFloat, startDate, reverse) => {
     const results = {
       percentFloatRemaining: null,
       floatRemaining: null,
-      turnovers: null
+      turnovers: null,
+      estimatedDaysRemaining: null,
+      averageVolPerDay: null,
     };
     let remainingFloatInCycle = totalFloat;
-
+    let cumulativeDailyVolume = 0;
+    let daysConsidered = 0;
     if (reverse) {
       for (let j = volByDate.length - 1; j >= 0; j--) {
         remainingFloatInCycle = remainingFloatInCycle - volByDate[j][1];  
@@ -72,6 +75,10 @@ const getFloatTurnovers = (volByDate, totalFloat, startDate, reverse) => {
     else {
       for (let j = 0; j < volByDate.length; j++) {
         remainingFloatInCycle = remainingFloatInCycle - volByDate[j][1];  
+        // Accumulate volume.
+        cumulativeDailyVolume += volByDate[j][1];
+        daysConsidered++;
+
         // If we've found a turnover date, add to list and reset count.
         if (remainingFloatInCycle < 0) {
           turnoverDates.push(volByDate[j][0])
@@ -84,6 +91,8 @@ const getFloatTurnovers = (volByDate, totalFloat, startDate, reverse) => {
           results.percentFloatRemaining = (remainingFloatInCycle / totalFloat) * 100;
         }
       }
+      results.averageVolPerDay = cumulativeDailyVolume / daysConsidered;
+      results.estimatedDaysRemaining = results.floatRemaining / results.averageVolPerDay;
     }
     return results;
   }

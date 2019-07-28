@@ -3,11 +3,11 @@ const createThrottle = require('./src/createThrottle.js')
 const throttle = createThrottle(1, 4000);
 const tickers = require('./stockList.js');
 const fs = require('fs');
-const log = console.log;
+const log = require('.logger.js');
 
 // Retreives financial data from Yahoo Finance, scrapes the float for a ticker, and returns it as a tuple.
 const scrapeFloat = (ticker) => new Promise((resolve, reject) => {
-  console.log(`Scraping float for ${ticker}...`);
+  log('info', `Scraping float for ${ticker}...`);
   return rp({ 
     uri: `https://finance.yahoo.com/quote/${ticker}/key-statistics/`,
     json: true,
@@ -16,7 +16,7 @@ const scrapeFloat = (ticker) => new Promise((resolve, reject) => {
     const searchTerm = 'floatShares":{"raw":';
     const floatIdx = response.indexOf(searchTerm);
     if (floatIdx < 0) {
-      log(`Search term ${searchTerm} not found in response.`)
+      log('info', `Search term ${searchTerm} not found in response.`)
     }
     const startIdx = floatIdx + searchTerm.length;
     const endIdx = startIdx + 20;
@@ -26,7 +26,7 @@ const scrapeFloat = (ticker) => new Promise((resolve, reject) => {
     resolve([ticker, parseInt(float)]);
   })
   .catch(err => { 
-    log(`error scraping float for ${ticker}: ${JSON.stringify(error)}`);
+    log('warn', `error scraping float for ${ticker}: ${JSON.stringify(error)}`);
   })
 }); 
 
@@ -41,10 +41,10 @@ const getAllFloats = (tickers) => {
       for (const floatEntry of results) {
         floatMap[floatEntry[0]] = floatEntry[1];
       }
-      log(`floatMap: ${JSON.stringify(floatMap)}`);
+      log('info', `floatMap: ${JSON.stringify(floatMap)}`);
       return floatMap;
     })
-    .catch(e => log(`Error: ${e}`));
+    .catch(e => log('warn', `Error getting all floats: ${e}`));
 };
 
 async function main() {
@@ -57,7 +57,7 @@ async function main() {
     const stringifiedData = JSON.stringify(fileObj);
     fs.writeFileSync('./floats.json', stringifiedData);
   } catch (e) {
-    console.log(e);
+    log('warn', e);
   }
 }
 

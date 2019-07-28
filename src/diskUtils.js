@@ -1,16 +1,17 @@
 const fs = require('fs');
 const folderPath = 'stockData';
 const daysBetween = require('./daysBetween.js');
+const log = require('./logger.js');
 
 
 /**
   Initializes the local stock data folder if it doesn't yet exist.
 */
-function initDataFolder() {
-  if (!fs.existsSync(folderPath)){
-    console.log(`${folderPath} folder doesn't exist. Creating...`);
-    fs.mkdirSync(folderPath, (err) => {
-      if (err) console.log(err);
+function initDataFolder(path) {
+  if (!fs.existsSync(path)) {
+    log('info', `${path} folder doesn't exist. Creating...`);
+    fs.mkdirSync(path, (err) => {
+      if (err) log('warn', err);
     });
   }
 }
@@ -24,7 +25,7 @@ function readStockDataFromDisk(ticker) {
   const filePath = `${folderPath}/${ticker}.json`;
   try {
     const data = fs.readFileSync(filePath, 'utf8');
-    console.log(`Local data found for ${ticker}.`);
+    log('info', `Local data found for ${ticker}.`);
     return JSON.parse(data);
   }
   catch (err) {
@@ -40,7 +41,7 @@ function readStockDataFromDisk(ticker) {
 */
 function writeStockDataToDisk(ticker, incomingData, existingData) {
   
-  initDataFolder();
+  initDataFolder(folderPath);
 
   const filePath = `${folderPath}/${ticker}.json`;
   const now = new Date();
@@ -53,13 +54,13 @@ function writeStockDataToDisk(ticker, incomingData, existingData) {
   // If we're creating the file for the first time.
   if (!fs.existsSync(filePath)) {
     try {
-      console.log(`${ticker} - ${filePath} doesn't exist. Creating...`);
+      log('info', `${ticker} - ${filePath} doesn't exist. Creating...`);
       const stringifiedData = JSON.stringify(writeObject);
       fs.writeFileSync(filePath, stringifiedData);
-      console.log(`${ticker} - Wrote data to disk.`);
+      log('info', `${ticker} - Wrote data to disk.`);
       return incomingData;
     } catch (err) {
-      console.log(`${ticker} - Error creating new file: `, err);
+      log('warn', `${ticker} - Error creating new file: `, err);
     }
   } 
   // Otherwise, we're appending data to existing file.
@@ -71,18 +72,18 @@ function writeStockDataToDisk(ticker, incomingData, existingData) {
       const sliceAfterIdx = incomingData.findIndex(day => day.date === lastDateRetrievedForExistingData);
       if (sliceAfterIdx > 0) {
         const newData = incomingData.slice(sliceAfterIdx + 1);
-        console.log(`${ticker} - Got ${newData.length} entries. Applying partial update.`);
+        log('info', `${ticker} - Got ${newData.length} entries. Applying partial update.`);
         writeObject.data = existingData.concat(newData);
       }
     }
     try {
       const stringifiedData = JSON.stringify(writeObject);
-      console.log(`File for ${ticker} exists. Updating...`);
+      log('info', `File for ${ticker} exists. Updating...`);
       fs.writeFileSync(filePath, stringifiedData);
-      console.log(`${ticker} - Updated data on disk.`);
+      log('info', `${ticker} - Updated data on disk.`);
       return writeObject.data;
     } catch (err) {
-      console.log(`${ticker} - Error updating existing data on disk: `, err);
+      log('warn', `${ticker} - Error updating existing data on disk: `, err);
     }    
   }
 }

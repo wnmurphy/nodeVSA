@@ -6,14 +6,14 @@ const buildHeatmap = require('./buildHeatMap');
 const findHits = require('./findHits.js');
 const buildSignals = require('./buildSignals.js');
 const daysBetween = require('./daysBetween.js');
-const log = console.log;
+const log = require('./logger.js');
 const data = require('./stockData.js');
 const diskUtils = require('./diskUtils');
 
 // Requests data for one stock ticker with a promise.
 const fetchDataForOneStock = (ticker) => new Promise((resolve, reject) => {
   
-  log('Getting: ', '\x1b[34m', ticker, '\x1b[0m');
+  log('info', `Getting: \x1b[34m'${ticker}\x1b[0m`);
   const queryString = {
     apikey: config.API_KEY,
     function: 'TIME_SERIES_DAILY',
@@ -34,11 +34,11 @@ const fetchDataForOneStock = (ticker) => new Promise((resolve, reject) => {
   } catch (e) {
     // If we have no local data for this ticker, retrieve complete history.
     if (e.code === 'ENOENT') {
-      log(`${ticker} - No local data.`);
+      log('info', `${ticker} - No local data.`);
       queryString.outputsize = 'full'; 
     }
     else {
-      log(`${ticker} - Error reading data from disk: `, e);
+      log('warn', `${ticker} - Error reading data from disk: ${e}`);
     }
   }
 
@@ -50,8 +50,8 @@ const fetchDataForOneStock = (ticker) => new Promise((resolve, reject) => {
     transform: parseRawData
   })
   .then(parsedData => {
-    log('Got: ', '\x1b[34m', ticker, '\x1b[0m');
-    console.log(`${ticker} - Retrieved ${parsedData.length} entries.`)
+    log('info', `Got: \x1b[34m${ticker}\x1b[0m`);
+    log('info', `${ticker} - Retrieved ${parsedData.length} entries.`)
     // Append to data stored locally.
     const localData = localFile ? localFile.data : null;
     parsedData = diskUtils.writeStockDataToDisk(ticker, parsedData, localData);
@@ -76,7 +76,7 @@ const fetchDataForOneStock = (ticker) => new Promise((resolve, reject) => {
   })
   .catch(err => { 
     // Tell user if something went wrong.
-    log('\n' + '\x1b[31m' + 'Ticker: ' + ticker + '\n' + 'Error: ' + '\x1b[0m' + '\n' + err);
+    log('warn', `\n\x1b[31mTicker: ${ticker}\nError: \x1b[0m\n${err}`);
     // Add ticker to retry list.
     data.retries.push(ticker);
     reject(err);

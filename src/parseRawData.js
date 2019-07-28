@@ -1,3 +1,4 @@
+const log = require('./logger.js');
 // Takes a parsed JSON object, and transforms it.
 // (Passed as the 'transform' option to request-promise.)
 function parseRawData (stock) {
@@ -22,8 +23,7 @@ function parseRawData (stock) {
     return transformed.reverse();
   }
   catch (error) {
-    console.log('Transform error. Got:');
-    console.log(error);
+    log('warn', `Transform error: ${error}`);
   }
 }
 module.exports = parseRawData;

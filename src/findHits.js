@@ -1,12 +1,13 @@
 const daysBetween = require('./daysBetween.js');
 const data = require('./stockData.js');
+const log = require('./logger.js');
 
 // A 'hit' is a pivot near the same price range as the current pivot.
 // Finds and stores all prior hits, recent hits, and recent hits on decreasing volume.
 // Scans an array of pivots for a single ticker.
 function findHits(ticker, direction, pivots) {
   if (!['long', 'short'].includes(direction)) {
-    return console.error('Must specify "long" or "short".');
+    return log('warn', 'Must specify "long" or "short".');
   }
   const pivot = direction === 'long' ? 'l' : 'h';
 

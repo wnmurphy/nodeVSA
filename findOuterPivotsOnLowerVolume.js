@@ -35,7 +35,7 @@ const filterResults = require('./src/filterResults.js');
 const printToScreen = require('./src/printResults.js');
 const writeToCsv = require('./src/writeCSV.js');
 const throttle = createThrottle(1, 1900);
-const log = console.log;
+const log = require('./src/logger.js');
 const data = require('./src/stockData.js');
 
 // Date is passed in from command line in format 'YYYY-MM-DD'.
@@ -60,14 +60,14 @@ const filter = process.argv[2] ? [
       await throttle();
       return await fetchStock(ticker);
     } catch (err) {
-      log(err);
+      log('warn', err);
     }
   });
 
   Promise.all(tickerRequests)
     .then(() => {
-      log(`\n\x1b[31m Fetch complete. \x1b[0m`);
-      log('Retries: ', data.retries);
+      log('info', '\n\x1b[31m Fetch complete. \x1b[0m');
+      log('info', `Retries: ${data.retries}`);
     })
     .then(() => {
       if (data.retries.length) {
@@ -78,7 +78,7 @@ const filter = process.argv[2] ? [
       }
     })
     .then(() => {
-      log('\n\x1b[31m' + 'Retries complete.' + '\x1b[0m');
+      log('info', '\n\x1b[31m Retries complete.\x1b[0m');
 
       let results;
 
@@ -87,23 +87,23 @@ const filter = process.argv[2] ? [
       }
       else {
         results = data.allSignals;
-        log('\n\x1b[31m' + 'No search filter provided. All results: ' + '\x1b[0m' + '\n');
+        log('info', '\n\x1b[31m' + 'No search filter provided. All results: ' + '\x1b[0m' + '\n');
       }
 
       if (results.length) {
-        log('\n\x1b[31m' + 'Search Results:' + '\x1b[0m');
+        log('info', '\n\x1b[31m' + 'Search Results:' + '\x1b[0m');
         printToScreen(results);
         writeToCsv(results);
 
         if(every(results, allResultsShort) || every(results, allResultsLong)) {
-          log('\n\x1b[32m' + 'All results agree. This has been a reliable signal about next trading day for the market' + '\x1b[0m');
+          log('info', '\n\x1b[32m' + 'All results agree. This has been a reliable signal about next trading day for the market' + '\x1b[0m');
         }
       }
       else {
-        log('\n\x1b[31m' + 'No results.' + '\x1b[0m');
+        log('info', '\n\x1b[31m' + 'No results.' + '\x1b[0m');
       }
     })
-    .catch(e => log(e));
+    .catch(e => log('warn', e));
 })();
 
 

@@ -6,7 +6,7 @@
   
   Example usage: node float GPRO 77930000 2017-01-04
 */
-const log = console.log;
+const log = require('./src/logger.js');
 const rp = require('request-promise');
 const config = require('./config.js')
 const parseRawData = require('./src/parseRawData.js');
@@ -18,7 +18,7 @@ const startDate = process.argv[4];
 const reverse = process.argv[5] === 'reverse' ? true : false;
 
 const fetchDataForOneStock = (ticker) => new Promise((resolve, reject) => {
-  log('Getting: ', '\x1b[34m', ticker, '\x1b[0m');
+  log(info, `Getting: \x1b[34m${ticker}\x1b[0m`);
   return rp({ // Request data for this stock.
     uri: 'https://www.alphavantage.co/query',
     json: true,
@@ -106,7 +106,9 @@ fetchDataForOneStock(ticker)
       return [day.date, day.v];
     });
     return volumeByDate;
-  }).then(volumeByDate => {
+  })
+  .then(volumeByDate => {
     const result = getFloatTurnovers(volumeByDate, totalFloat, startDate, reverse);
-    log(result);
-  }).catch(e => console.log(`Error: ${e}`));
+    log('info', result);
+  })
+  .catch(e => log('warn', e, e.stack));

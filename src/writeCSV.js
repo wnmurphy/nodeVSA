@@ -1,5 +1,5 @@
 const fs = require('fs');
-const log = console.log;
+const log = require('./logger.js');
 const data = require('./stockData.js');
 
 function writeCSV (signalsArray) {
@@ -27,7 +27,7 @@ function writeCSV (signalsArray) {
     });
   }
 
-  log('\n\nCSV results written to disk.'); 
+  log('info', '\n\nCSV results written to disk.'); 
 }
 
 module.exports = writeCSV;

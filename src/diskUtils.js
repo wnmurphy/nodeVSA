@@ -11,7 +11,9 @@ function initDataFolder(path) {
   if (!fs.existsSync(path)) {
     log('info', `${path} folder doesn't exist. Creating...`);
     fs.mkdirSync(path, (err) => {
-      if (err) log('warn', err);
+      if (err) {
+        log('warn', err, e.stack);
+      };
     });
   }
 }
@@ -25,7 +27,7 @@ function readStockDataFromDisk(ticker) {
   const filePath = `${folderPath}/${ticker}.json`;
   try {
     const data = fs.readFileSync(filePath, 'utf8');
-    log('info', `Local data found for ${ticker}.`);
+    log('info', `${ticker} - Local data found.`);
     return JSON.parse(data);
   }
   catch (err) {
@@ -59,8 +61,8 @@ function writeStockDataToDisk(ticker, incomingData, existingData) {
       fs.writeFileSync(filePath, stringifiedData);
       log('info', `${ticker} - Wrote data to disk.`);
       return incomingData;
-    } catch (err) {
-      log('warn', `${ticker} - Error creating new file: `, err);
+    } catch (e) {
+      log('warn', `${ticker} - Error creating new file: ${e}`, e.stack);
     }
   } 
   // Otherwise, we're appending data to existing file.
@@ -72,18 +74,18 @@ function writeStockDataToDisk(ticker, incomingData, existingData) {
       const sliceAfterIdx = incomingData.findIndex(day => day.date === lastDateRetrievedForExistingData);
       if (sliceAfterIdx > 0) {
         const newData = incomingData.slice(sliceAfterIdx + 1);
-        log('info', `${ticker} - Got ${newData.length} entries. Applying partial update.`);
+        log('info', `${ticker} - Got ${newData.length} new entries not in local data. Applying partial update.`);
         writeObject.data = existingData.concat(newData);
       }
     }
     try {
       const stringifiedData = JSON.stringify(writeObject);
-      log('info', `File for ${ticker} exists. Updating...`);
+      log('info', `${ticker} - Updating local data file...`);
       fs.writeFileSync(filePath, stringifiedData);
       log('info', `${ticker} - Updated data on disk.`);
       return writeObject.data;
-    } catch (err) {
-      log('warn', `${ticker} - Error updating existing data on disk: `, err);
+    } catch (e) {
+      log('warn', `${ticker} - Error updating existing data on disk: ${e}`, e.stack);
     }    
   }
 }

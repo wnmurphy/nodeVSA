@@ -27,7 +27,7 @@ function writeCSV (signalsArray) {
     });
   }
 
-  log('info', '\n\nCSV results written to disk.'); 
+  log('info', 'CSV results written to disk.'); 
 }
 
 module.exports = writeCSV;

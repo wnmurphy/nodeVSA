@@ -66,41 +66,40 @@ const filter = process.argv[2] ? [
 
   Promise.all(tickerRequests)
     .then(() => {
-      log('info', '\n\x1b[31m Fetch complete. \x1b[0m');
-      log('info', `Retries: ${data.retries}`);
+      log('info', 'Fetch complete.');
     })
     .then(() => {
       if (data.retries.length) {
-        const retryRequests = data.retries.map(ticker => fetchStock(ticker).catch(e => log(e)));
+        log('info', `Retries: ${data.retries}`);
+        const retryRequests = data.retries.map(ticker => fetchStock(ticker).catch(e => log('warn', e, e.stack)));
         // const retries = retryRequests.map(p => p.catch(err => null))
         // Adds individual catch for each retry, and sets null value so rest can continue if retry also results in error.
-        return Promise.all(retryRequests);
+        return Promise.all(retryRequests).then(() => {
+          log('info', 'Retries complete.');
+        });
       }
     })
     .then(() => {
-      log('info', '\n\x1b[31m Retries complete.\x1b[0m');
-
       let results;
-
       if (filter) {
         results = filterResults(filter);
       }
       else {
         results = data.allSignals;
-        log('info', '\n\x1b[31m' + 'No search filter provided. All results: ' + '\x1b[0m' + '\n');
+        // console.log('\n\x1b[31m' + 'No search filter provided. All results: ' + '\x1b[0m' + '\n');
       }
-
+      log('info', `Found ${results.length} outer pivots on lower volume.`);
+      
       if (results.length) {
-        log('info', '\n\x1b[31m' + 'Search Results:' + '\x1b[0m');
+        console.log('\n\x1b[31m' + 'Search Results:' + '\x1b[0m');
         printToScreen(results);
         writeToCsv(results);
-
         if(every(results, allResultsShort) || every(results, allResultsLong)) {
-          log('info', '\n\x1b[32m' + 'All results agree. This has been a reliable signal about next trading day for the market' + '\x1b[0m');
+          log('info', 'All results agree. This has been a reliable signal about next trading day for the market.');
         }
       }
       else {
-        log('info', '\n\x1b[31m' + 'No results.' + '\x1b[0m');
+        log('info', 'No results.');
       }
     })
     .catch(e => log('warn', e));

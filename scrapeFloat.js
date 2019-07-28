@@ -3,11 +3,11 @@ const createThrottle = require('./src/createThrottle.js')
 const throttle = createThrottle(1, 4000);
 const tickers = require('./stockList.js');
 const fs = require('fs');
-const log = require('.logger.js');
+const log = require('./src/logger.js');
 
 // Retreives financial data from Yahoo Finance, scrapes the float for a ticker, and returns it as a tuple.
 const scrapeFloat = (ticker) => new Promise((resolve, reject) => {
-  log('info', `Scraping float for ${ticker}...`);
+  log('info', `${ticker} - Scraping float data...`);
   return rp({ 
     uri: `https://finance.yahoo.com/quote/${ticker}/key-statistics/`,
     json: true,
@@ -25,8 +25,8 @@ const scrapeFloat = (ticker) => new Promise((resolve, reject) => {
     const float = snippetArr[0];
     resolve([ticker, parseInt(float)]);
   })
-  .catch(err => { 
-    log('warn', `error scraping float for ${ticker}: ${JSON.stringify(error)}`);
+  .catch(e => { 
+    log('warn', `${ticker} - Error scraping float: ${e)}`, e.stack);
   })
 }); 
 
@@ -44,7 +44,7 @@ const getAllFloats = (tickers) => {
       log('info', `floatMap: ${JSON.stringify(floatMap)}`);
       return floatMap;
     })
-    .catch(e => log('warn', `Error getting all floats: ${e}`));
+    .catch(e => log('warn', `Error during retrieval of all floats: ${e}`, e.stack));
 };
 
 async function main() {
@@ -57,7 +57,7 @@ async function main() {
     const stringifiedData = JSON.stringify(fileObj);
     fs.writeFileSync('./floats.json', stringifiedData);
   } catch (e) {
-    log('warn', e);
+    log('warn', e, e.stack);
   }
 }
 

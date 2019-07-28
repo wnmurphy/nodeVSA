@@ -18,7 +18,7 @@ const startDate = process.argv[4];
 const reverse = process.argv[5] === 'reverse' ? true : false;
 
 const fetchDataForOneStock = (ticker) => new Promise((resolve, reject) => {
-  log(info, `Getting: \x1b[34m${ticker}\x1b[0m`);
+  log('info', `${ticker} - Fetching data...`);
   return rp({ // Request data for this stock.
     uri: 'https://www.alphavantage.co/query',
     json: true,

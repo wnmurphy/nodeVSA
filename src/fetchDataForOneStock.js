@@ -13,7 +13,7 @@ const diskUtils = require('./diskUtils');
 // Requests data for one stock ticker with a promise.
 const fetchDataForOneStock = (ticker) => new Promise((resolve, reject) => {
   
-  log('info', `Getting: \x1b[34m'${ticker}\x1b[0m`);
+  log('info', `${ticker} - Fetching data...`);
   const queryString = {
     apikey: config.API_KEY,
     function: 'TIME_SERIES_DAILY',
@@ -34,11 +34,11 @@ const fetchDataForOneStock = (ticker) => new Promise((resolve, reject) => {
   } catch (e) {
     // If we have no local data for this ticker, retrieve complete history.
     if (e.code === 'ENOENT') {
-      log('info', `${ticker} - No local data.`);
+      log('info', `${ticker} - No local data stored.`);
       queryString.outputsize = 'full'; 
     }
     else {
-      log('warn', `${ticker} - Error reading data from disk: ${e}`);
+      log('warn', `${ticker} - Error reading data from disk: ${e}`, e.stack);
     }
   }
 
@@ -50,7 +50,6 @@ const fetchDataForOneStock = (ticker) => new Promise((resolve, reject) => {
     transform: parseRawData
   })
   .then(parsedData => {
-    log('info', `Got: \x1b[34m${ticker}\x1b[0m`);
     log('info', `${ticker} - Retrieved ${parsedData.length} entries.`)
     // Append to data stored locally.
     const localData = localFile ? localFile.data : null;
@@ -74,12 +73,12 @@ const fetchDataForOneStock = (ticker) => new Promise((resolve, reject) => {
 
     resolve();
   })
-  .catch(err => { 
+  .catch(e => { 
     // Tell user if something went wrong.
-    log('warn', `\n\x1b[31mTicker: ${ticker}\nError: \x1b[0m\n${err}`);
+    log('warn', `${ticker} - Error fetching data: ${e}`, e.stack);
     // Add ticker to retry list.
     data.retries.push(ticker);
-    reject(err);
+    reject(e);
   })
 }); 
 

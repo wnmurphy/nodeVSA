@@ -1,5 +1,5 @@
 const config = require('../config.js')
-const data = require('./stockData.js');
+const state = require('./stockData.js');
 const log = require('./logger.js');
 const parseRawData = require('./parseRawData.js');
 const rp = require('request-promise');
@@ -30,7 +30,7 @@ const fetchDataForOneStock = (ticker, getAllData = false) => new Promise((resolv
   .catch(e => { 
     log('warn', `${ticker} - Error fetching data: ${e}`, e.stack);
     // Add ticker to retry list.
-    data.retries.push(ticker);
+    state.retries.push(ticker);
     reject(e);
   })
 }); 

@@ -1,5 +1,5 @@
 const daysBetween = require('./daysBetween.js');
-const data = require('./stockData.js');
+const state = require('./stockData.js');
 const log = require('./logger.js');
 
 // A 'hit' is a pivot near the same price range as the current pivot.
@@ -12,9 +12,10 @@ function findHits(ticker, direction, pivots) {
   const pivot = direction === 'long' ? 'l' : 'h';
 
   // Calculate average volume over last 14 days. Used to detect absorption volume.
-  const avgVolume = data.quotes[ticker].data.map(day => day.v).reduce((a,b)=>{ return a + b;})/data.quotes[ticker].data.length;
+  const avgVolume = state.quotes[ticker].data.map(day => day.v).reduce((a, b) => { return a + b;
+  }) / state.quotes[ticker].data.length;
 
-  // For each day of pivot data in data.quotes[ticker][pivotArr]
+  // For each day of pivot data in state.quotes[ticker][pivotArr]
   for (const [currentPivotIdx, currentPivot] of pivots.entries()) {
 
     // Init values.

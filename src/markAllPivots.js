@@ -1,12 +1,12 @@
-const data = require('./stockData.js');
+const state = require('./stockData.js');
 
 // Take an array, days, and the ticker symbol as a string.
 function markAllPivots(days, ticker) {
   const LOOKBACK = 14;
 
   // Init storage arrays for pivots if undefined.
-  data.quotes[ticker]['pivotHighs'] = data.quotes[ticker]['pivotHighs'] || [];
-  data.quotes[ticker]['pivotLows'] = data.quotes[ticker]['pivotLows'] || [];
+  state.quotes[ticker]['pivotHighs'] = state.quotes[ticker]['pivotHighs'] || [];
+  state.quotes[ticker]['pivotLows'] = state.quotes[ticker]['pivotLows'] || [];
 
   // Calculate a 14-day volume moving average for each day.
   for (let i = LOOKBACK; i < days.length; i++) {
@@ -27,7 +27,7 @@ function markAllPivots(days, ticker) {
         days[i].pivotHigh = true;
         // Copy next day close for analysis
         days[i].tomorrowClose = 'N/A';
-        data.quotes[ticker]['pivotHighs'].push(days[i]);
+        state.quotes[ticker]['pivotHighs'].push(days[i]);
       }
     } 
     else { 
@@ -36,7 +36,7 @@ function markAllPivots(days, ticker) {
         days[i].pivotHigh = true;
         // Copy next day close for analysis
         days[i].tomorrowClose = days[i + 1].c;
-        data.quotes[ticker]['pivotHighs'].push(days[i]);
+        state.quotes[ticker]['pivotHighs'].push(days[i]);
       }
     }
   }
@@ -49,7 +49,7 @@ function markAllPivots(days, ticker) {
         days[i].pivotLow = true;
         // Copy next day close for analysis
         days[i].tomorrowClose = 'N/A';
-        data.quotes[ticker]['pivotLows'].push(days[i]);
+        state.quotes[ticker]['pivotLows'].push(days[i]);
       }
     } 
     else {
@@ -58,7 +58,7 @@ function markAllPivots(days, ticker) {
         days[i].pivotLow = true;
         // Copy next day close for analysis
         days[i].tomorrowClose = days[i + 1].c;
-        data.quotes[ticker]['pivotLows'].push(days[i]);
+        state.quotes[ticker]['pivotLows'].push(days[i]);
       }
     }
   }

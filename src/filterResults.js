@@ -4,14 +4,14 @@
   // "signal.date === '2017-07-07'"
   // "signal.symbol === 'AAPL' && signal.trade === 'long'"
 
-let data = require('./stockData.js');
+const state = require('./stockData.js');
 
 function filterResults(filter) {
   let results;
 
   // Get search results.
   if(filter) { 
-    results = data.allSignals.filter(function(signal){
+    results = state.allSignals.filter(function(signal){
       return eval(filter);
     });
   }

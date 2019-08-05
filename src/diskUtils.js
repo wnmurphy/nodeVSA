@@ -89,6 +89,7 @@ function mergeNewAndExistingData(ticker, incomingData, existingData) {
 
 
 module.exports = {
+  initDataFolder,
   readStockDataFromDisk,
   writeStockDataToDisk,
   mergeNewAndExistingData,

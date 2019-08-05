@@ -1,4 +1,4 @@
-let data = require("./stockData.js");
+const state = require("./stockData.js");
 
 /**
   A signal is an object that contains information about a pivot. 
@@ -6,7 +6,7 @@ let data = require("./stockData.js");
 */
 
 function buildSignals (direction, pivotsArr, ticker) {
-  data.allSignals = data.allSignals || [];
+  state.allSignals = state.allSignals || [];
 
   for (const pivot of pivotsArr) {
     if (pivot.priorHitsCount && pivot.priorHitsCount > 0) {
@@ -28,7 +28,7 @@ function buildSignals (direction, pivotsArr, ticker) {
         outerPivotOnLowerVolumeDate: pivot.outerPivotOnLowerVolumeDate,
         tomorrowClose: pivot.tomorrowClose
       };
-      data.allSignals.push(currentSignal);
+      state.allSignals.push(currentSignal);
     }
   }
 }

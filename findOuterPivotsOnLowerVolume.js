@@ -29,7 +29,7 @@
 */
 
 const tickers = require('./stockList.js');
-const data = require('./src/stockData.js');
+const state = require('./src/stockstate.js');
 
 const createThrottle = require('./src/createThrottle.js');
 const throttle = createThrottle(1, 1900);
@@ -92,9 +92,9 @@ const filter = process.argv[2] ? [
   Promise.all(tickerRequests)
     .then(() => {
       log('info', 'Fetch complete.');
-      if (data.retries.length) {
-        log('info', `Retries: ${data.retries}`);
-        const retryRequests = data.retries.map(ticker => fetchStock(ticker).catch(e => log('warn', e, e.stack)));
+      if (state.retries.length) {
+        log('info', `Retries: ${state.retries}`);
+        const retryRequests = state.retries.map(ticker => fetchStock(ticker).catch(e => log('warn', e, e.stack)));
         // const retries = retryRequests.map(p => p.catch(err => null))
         // Adds individual catch for each retry, and sets null value so rest can continue if retry also results in error.
         return Promise.all(retryRequests).then(() => {
@@ -108,7 +108,7 @@ const filter = process.argv[2] ? [
         results = filterResults(filter);
       }
       else {
-        results = data.allSignals;
+        results = state.allSignals;
         // console.log('\n\x1b[31m' + 'No search filter provided. All results: ' + '\x1b[0m' + '\n');
       }
       log('info', `Found ${results.length} outer pivots on lower volume.`);
@@ -159,23 +159,23 @@ function needsFullRetrieval(localFile) {
 }
 
 function initDataForStock(ticker, parsedData) {
-  data.quotes[ticker] = {};
-  data.quotes[ticker]['data'] = parsedData;
+  state.quotes[ticker] = {};
+  state.quotes[ticker]['data'] = parsedData;
 }
 
 function processDataForStock(ticker, parsedData) {
   try {
     // Mark pivot highs and lows.
-    markAllPivots(data.quotes[ticker]['data'], ticker);
+    markAllPivots(state.quotes[ticker]['data'], ticker);
     buildHeatmap(ticker);
 
     // Scan each pivot for prior pivots in range, decreasing volume, absorption volume, etc.
-    findHits(ticker, 'long', data.quotes[ticker]['pivotLows']);
-    findHits(ticker, 'short', data.quotes[ticker]['pivotHighs']);
+    findHits(ticker, 'long', state.quotes[ticker]['pivotLows']);
+    findHits(ticker, 'short', state.quotes[ticker]['pivotHighs']);
 
     // Build our buy/sell signal objects.
-    buildSignals('long', data.quotes[ticker]['pivotLows'], ticker);
-    buildSignals('short', data.quotes[ticker]['pivotHighs'], ticker);
+    buildSignals('long', state.quotes[ticker]['pivotLows'], ticker);
+    buildSignals('short', state.quotes[ticker]['pivotHighs'], ticker);
   } 
   catch (e) {
     throw `${ticker} - Error processing data: ${e}`;

@@ -1,0 +1,72 @@
+Database solutions:
+
+
+- mongodb
+- SQL
+- redis
+
+
+
+
+Write:
+  1x per day for each stock
+  Any time float is updated (1-2x per week).
+Read:
+  Any time float calculation is done.
+  Any time scan is performed.
+
+
+Once per week, Sundays mid-day:
+  - For each stock in ticker list, 
+    - Retrieve float from Yahoo
+    - Update or add float in database float_by_ticker table.
+      - primary key
+      - ticker symbol
+      - float
+      - last_updated
+    - If ticker doesn't exist in historical_data_by_ticker table,
+      
+      - Retrieve full historical data.
+        - STOCK.last_updated
+        - STOCK.date
+        - STOCK.open
+        - STOCK.high
+        - STOCK.low
+        - STOCK.close
+        - STOCK.volume
+        - STOCK.final_data (boolean, was data retrieved after market close on that day?)
+        - STOCK.pivot (high/low/null)
+        - STOCK.ma_close_20
+        - STOCK.ma_close_50
+        - STOCK.ma_close_200
+        - STOCK.ma_volume_14
+
+      - Calculate pivots, then store results:
+        - PIVOT.date
+        - PIVOT.outer_pivot (boolean, was pivot lower/higher than last pivot?)
+        - PIVOT.outer_pivot_on_lower_volume (boolean, was volume less than on last pivot?)
+        - PIVOT.pivot_percentage (how much higher/lower was this pivot than prior day?)
+        - PIVOT.absorption_volume (boolean, was volume significantly higher than prior days?)
+        - PIVOT.below_average_volume (boolean, was volume less than moving average?)
+
+        - PIVOT.prior_hits (array of dates)
+        - PIVOT.prior_hits_count (length of prior_hits)
+        - PIVOT.recent_hits (array of dates)
+        - PIVOT.recent_hits_count (length of recent_hits)
+        - PIVOT.recent_hits_on_greater_volume (array of dates)
+        - PIVOT.recent_hits_on_greater_volume_count (length of recent_hits_on_greater_volume)
+        - PIVOT.all_recent_hits_decreasing (boolean or null)
+
+
+
+
+Daily, at 12 noon:
+  - For each stock, 
+    - if lastUpdated is < 100 days ago, 
+      - retrieve last 100 days of data
+      - crop only most recent data
+      - write to database historical data table
+    - calculate pivots
+      - for each pivot,
+        - if pivot does not already exist in database, write to pivots table
+

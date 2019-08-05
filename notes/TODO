@@ -1,2 +1,18 @@
 TODO:
 
+- Fix filtering.
+- Decouple fetch logic from analysis logic.
+- Implement a database instead of filesystem access.
+- Improve float turnover script so it can automatically pick out the most recent major pivot on the week chart.
+- Set up a raspberry pi as a tradestation.
+  - Buy a subscription
+    - $30/mo for 30 APi requests/minute. For a 500 stock screen list that's 17 minutes.
+    - $50/mo for 120 APi requests/minute. For a 500 stock screen list that's 4.5 minutes.
+  - Run my scripts on a cron job every trading day.
+    - Update the data.
+    - Identify pivots to manually check.
+    - Identify impending float turnovers.
+  - Send me SMS notifications at 12:30pm each day:
+    - daily list of pivots to check.
+    - notify me of impending float turnover.
+  

@@ -4,7 +4,7 @@
   Accumulates the daily volume since the start date, returns the percentage of float
   turnover since that date.
   
-  Example usage: node float GPRO 77930000 2017-01-04
+  Example usage: node calculateFloatTurnover GPRO 77930000 2017-01-04
 */
 const log = require('./src/logger.js');
 const rp = require('request-promise');
@@ -58,10 +58,12 @@ const getFloatTurnovers = (volByDate, totalFloat, startDate, reverse) => {
     let daysConsidered = 0;
     if (reverse) {
       for (let j = volByDate.length - 1; j >= 0; j--) {
-        remainingFloatInCycle = remainingFloatInCycle - volByDate[j][1];  
+        const todaysDate = volByDate[j][0];
+        const todaysVolume = volByDate[j][1];
+        remainingFloatInCycle = remainingFloatInCycle - todaysVolume;  
         // If we've found a turnover date, add to list and reset count.
         if (remainingFloatInCycle < 0) {
-          turnoverDates.push(volByDate[j][0])
+          turnoverDates.push(todaysDate)
           remainingFloatInCycle += totalFloat;
         }
         // If this is the last day, return remaining float and list of turnover dates.
@@ -74,21 +76,43 @@ const getFloatTurnovers = (volByDate, totalFloat, startDate, reverse) => {
     } 
     else {
       for (let j = 0; j < volByDate.length; j++) {
-        remainingFloatInCycle = remainingFloatInCycle - volByDate[j][1];  
+        const todaysDate = volByDate[j][0];
+        const todaysVolume = volByDate[j][1];
+        remainingFloatInCycle = remainingFloatInCycle - todaysVolume;  
         // Accumulate volume.
-        cumulativeDailyVolume += volByDate[j][1];
+        cumulativeDailyVolume += todaysVolume;
         daysConsidered++;
 
         // If we've found a turnover date, add to list and reset count.
         if (remainingFloatInCycle < 0) {
-          turnoverDates.push(volByDate[j][0])
+          turnoverDates.push(todaysDate)
           remainingFloatInCycle += totalFloat;
+        }
+        const partial = remainingFloatInCycle / totalFloat;
+        const partials = {
+          "23.8": [],
+          "38.2": [],
+          "50": [],
+          "61.8": [],
+        };
+        if (0.22 < partial && partial < 0.26) {
+          partials["23.8"].push(todaysDate)
+        }
+        if (0.36 < partial && partial < 0.40) {
+          partials["38.2"].push(todaysDate)
+        }
+        if (0.48 < partial && partial < 0.52) {
+          partials["50"].push(todaysDate)
+        }
+        if (0.59 < partial && partial < 0.63) {
+          partials["61.8"].push(todaysDate)
         }
         // If this is the last day, return remaining float and list of turnover dates.
         if (j === volByDate.length - 1) {
           results.floatRemaining = remainingFloatInCycle;
           results.turnovers = turnoverDates;
           results.percentFloatRemaining = (remainingFloatInCycle / totalFloat) * 100;
+          results.partials = partials;
         }
       }
       results.averageVolPerDay = cumulativeDailyVolume / daysConsidered;
@@ -109,6 +133,6 @@ fetchDataForOneStock(ticker)
   })
   .then(volumeByDate => {
     const result = getFloatTurnovers(volumeByDate, totalFloat, startDate, reverse);
-    log('info', result);
+    log('info', JSON.stringify(result));
   })
   .catch(e => log('warn', e, e.stack));

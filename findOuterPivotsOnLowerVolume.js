@@ -29,14 +29,25 @@
 */
 
 const tickers = require('./stockList.js');
-const fetchStock = require('./src/fetchDataForOneStock.js');
+const data = require('./src/stockData.js');
+
 const createThrottle = require('./src/createThrottle.js');
+const throttle = createThrottle(1, 1900);
+
+const fetchStock = require('./src/fetchDataForOneStock.js');
+const markAllPivots = require('./src/markAllPivots.js');
+const buildSignals = require('./src/buildSignals.js');
+const buildHeatmap = require('./src/buildHeatMap');
+const findHits = require('./src/findHits.js');
+
 const filterResults = require('./src/filterResults.js');
 const printToScreen = require('./src/printResults.js');
 const writeToCsv = require('./src/writeCSV.js');
-const throttle = createThrottle(1, 1900);
+
 const log = require('./src/logger.js');
-const data = require('./src/stockData.js');
+const disk = require('./src/diskUtils.js');
+const daysBetween = require('./src/daysBetween.js');
+
 
 // Date is passed in from command line in format 'YYYY-MM-DD'.
 // The filter string is evaluated in filterResults.js
@@ -53,22 +64,34 @@ const filter = process.argv[2] ? [
 (function() {
 
   // Create an array containing a promise for each ticker request.
-  // Adds rate-limiting per data source's request; < 200 requests per minute
   // Requests get individual catch blocks, so if one fails the rest can continue.
   const tickerRequests = tickers.map(async (ticker) => {
     try {
       await throttle();
-      return await fetchStock(ticker);
-    } catch (err) {
-      log('warn', err);
+
+      // Check for local data for this ticker first before retrieval.
+      const localFile = disk.readStockDataFromDisk(ticker);
+      let parsedData = await fetchStock(ticker, needsFullRetrieval(localFile));
+      // If local data exists, merge with fetched data.
+      if (localFile.lastDateRetrieved && localFile.data) {
+        parsedData = disk.mergeNewAndExistingData(ticker, parsedData, localFile.data);
+      }
+      disk.writeStockDataToDisk(ticker, parsedData);
+
+      // Initialize ticker in state, and add parsed data for processing.
+      initDataForStock(ticker, parsedData);
+      processDataForStock(ticker, parsedData);
+    } 
+    catch (e) {
+      log('warn', e, e.stack);
     }
   });
 
+
+  // Execute all ticker requests, perform any needed retries, and apply search filter to signals.
   Promise.all(tickerRequests)
     .then(() => {
       log('info', 'Fetch complete.');
-    })
-    .then(() => {
       if (data.retries.length) {
         log('info', `Retries: ${data.retries}`);
         const retryRequests = data.retries.map(ticker => fetchStock(ticker).catch(e => log('warn', e, e.stack)));
@@ -123,4 +146,38 @@ function allResultsShort(result) {
 
 function allResultsLong(result) {
   return result.trade === 'long';
+}
+
+// Returns true if localFile.data doesn't exist (data not fetched before), or if date ('2019-01-02') was more than 100 days ago, otherwise false.
+function needsFullRetrieval(localFile) {
+  if (!localFile.data) {
+    return true;
+  }
+  const mostRecentDate = localFile.lastDateRetrieved.slice(0, 10);
+  const currentDate = new Date().toISOString().slice(0, 10);
+  return daysBetween(mostRecentDate, currentDate) > 100 ? true : false;
+}
+
+function initDataForStock(ticker, parsedData) {
+  data.quotes[ticker] = {};
+  data.quotes[ticker]['data'] = parsedData;
+}
+
+function processDataForStock(ticker, parsedData) {
+  try {
+    // Mark pivot highs and lows.
+    markAllPivots(data.quotes[ticker]['data'], ticker);
+    buildHeatmap(ticker);
+
+    // Scan each pivot for prior pivots in range, decreasing volume, absorption volume, etc.
+    findHits(ticker, 'long', data.quotes[ticker]['pivotLows']);
+    findHits(ticker, 'short', data.quotes[ticker]['pivotHighs']);
+
+    // Build our buy/sell signal objects.
+    buildSignals('long', data.quotes[ticker]['pivotLows'], ticker);
+    buildSignals('short', data.quotes[ticker]['pivotHighs'], ticker);
+  } 
+  catch (e) {
+    throw `${ticker} - Error processing data: ${e}`;
+  }
 }

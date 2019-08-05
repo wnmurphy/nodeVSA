@@ -1,6 +1,6 @@
 const SP500 = [
-  // "TSLA",
-  "AAPL",
+  "TSLA",
+  // "AAPL",
   // "TTWO",
 ]
 // const SP500 = [

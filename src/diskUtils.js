@@ -21,7 +21,7 @@ function initDataFolder(path) {
 
 /**
   Takes a ticker string, reads a JSON file from disk with that ticker as the filename.
-  Throws error if the file doesn't exist.
+  Returns empty object if the file doesn't exist, or parsed JSON file.
 */
 function readStockDataFromDisk(ticker) {
   const filePath = `${folderPath}/${ticker}.json`;
@@ -30,68 +30,66 @@ function readStockDataFromDisk(ticker) {
     log('info', `${ticker} - Local data found.`);
     return JSON.parse(data);
   }
-  catch (err) {
-    throw err;
+  catch (e) {
+    if (e.code === 'ENOENT') {
+      log('info', `${ticker} - No local data stored.`);
+      return {};
+    }
+    throw `${ticker} - Error reading data from disk: ${e}`;
   }
 }
 
+
 /**
-  Takes a ticker string, a serialized stock data object, and an optional existingData object.
-  Writes the stock data to a local data file for that ticker if it doesn't exist.
-  If the local data file already exists, appends existingData.
-  Returns either the new data, or the new + existing data.
+  Takes a ticker string, and a serialized object of parsed stock data.
+  Initializes local data folder if it doesn't exist.
+  Creates a JSON file with ticker as the file name if it doesn't exist, then Writes parsed data to that file.
+  Overwrites data if file exists.
 */
-function writeStockDataToDisk(ticker, incomingData, existingData) {
+function writeStockDataToDisk(ticker, parsedData) {
   
   initDataFolder(folderPath);
 
   const filePath = `${folderPath}/${ticker}.json`;
   const now = new Date();
   const writeObject = {
-    data: incomingData,
-    lastDateRetrieved: incomingData[incomingData.length - 1].date,
+    data: parsedData,
+    lastDateRetrieved: parsedData[parsedData.length - 1].date,
     lastUpdated: now.toISOString(),
   };
 
-  // If we're creating the file for the first time.
-  if (!fs.existsSync(filePath)) {
-    try {
-      log('info', `${ticker} - ${filePath} doesn't exist. Creating...`);
-      const stringifiedData = JSON.stringify(writeObject);
-      fs.writeFileSync(filePath, stringifiedData);
-      log('info', `${ticker} - Wrote data to disk.`);
-      return incomingData;
-    } catch (e) {
-      log('warn', `${ticker} - Error creating new file: ${e}`, e.stack);
-    }
+  try {
+    const stringifiedData = JSON.stringify(writeObject);
+    fs.writeFileSync(filePath, stringifiedData);
+    log('info', `${ticker} - Wrote data to disk.`);
+    return;
   } 
-  // Otherwise, we're appending data to existing file.
-  else {
-    // If we have a partial update, append only the newest day entries.
-    // Otherwise, we can just overwrite existingData with incomingData, which has already been set.
-    if (incomingData.length < existingData.length) {
-      const lastDateRetrievedForExistingData = existingData[existingData.length - 1].date.slice(0, 10);
-      const sliceAfterIdx = incomingData.findIndex(day => day.date === lastDateRetrievedForExistingData);
-      if (sliceAfterIdx > 0) {
-        const newData = incomingData.slice(sliceAfterIdx + 1);
-        log('info', `${ticker} - Got ${newData.length} new entries not in local data. Applying partial update.`);
-        writeObject.data = existingData.concat(newData);
-      }
-    }
-    try {
-      const stringifiedData = JSON.stringify(writeObject);
-      log('info', `${ticker} - Updating local data file...`);
-      fs.writeFileSync(filePath, stringifiedData);
-      log('info', `${ticker} - Updated data on disk.`);
-      return writeObject.data;
-    } catch (e) {
-      log('warn', `${ticker} - Error updating existing data on disk: ${e}`, e.stack);
-    }    
+  catch (e) {
+    throw `${ticker} - Error writing data to disk: ${e}`;
   }
+}
+
+
+/**
+  Takes an new parsed data file, and existing parsed data file.
+  Looks for last date of existing data in incoming data, crops just the new entries not already present in existing data, appends them to existing data, and returns existing data.
+*/
+function mergeNewAndExistingData(ticker, incomingData, existingData) {
+  initDataFolder(folderPath);
+  const lastDateRetrievedForExistingData = existingData[existingData.length - 1].date.slice(0, 10);
+  const sliceAfterIdx = incomingData.findIndex(day => day.date === lastDateRetrievedForExistingData);
+  console.log(sliceAfterIdx);
+  if (sliceAfterIdx > 0) {
+    const newData = incomingData.slice(sliceAfterIdx + 1);
+    log('info', `${ticker} - Found ${newData.length} entries not in local data. Merging...`);
+    return existingData.concat(newData);
+  }
+  throw `Last date of existing data not found in incoming data update.`;
 }
 
 
 module.exports = {
   readStockDataFromDisk,
   writeStockDataToDisk,
+  mergeNewAndExistingData,
 }

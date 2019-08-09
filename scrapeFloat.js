@@ -23,10 +23,11 @@ const scrapeFloat = (ticker) => new Promise((resolve, reject) => {
     const snippet = response.slice(startIdx, endIdx);
     const snippetArr = snippet.split(',');
     const float = snippetArr[0];
+    log('info', `${ticker} - Got float: ${float}`)
     resolve([ticker, parseInt(float)]);
   })
   .catch(e => { 
-    log('warn', `${ticker} - Error scraping float: ${e)}`, e.stack);
+    log('warn', `${ticker} - Error scraping float: ${e}`, e.stack);
   })
 }); 
 
@@ -62,5 +63,7 @@ async function main() {
 }
 
 main();
+
+// return scrapeFloat("TSLA")
 
 module.exports = scrapeFloat;

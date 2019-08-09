@@ -70,3 +70,18 @@ Daily, at 12 noon:
       - for each pivot,
         - if pivot does not already exist in database, write to pivots table
 
+
+
+
+MySQL
+
+
+
+        CREATE DATABASE node_vsa;
+        CREATE TABLE IF NOT EXISTS `float` (
+          `id` int(5) NOT NULL AUTO_INCREMENT,
+          `ticker` varchar(255) NOT NULL,
+          `float` int(14) NOT NULL,
+          `last_updated` date
+          PRIMARY KEY (`id`)
+        ) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1;

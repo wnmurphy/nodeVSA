@@ -24,7 +24,7 @@ const fetchDataForOneStock = (ticker, getAllData = false) => new Promise((resolv
     transform: parseRawData
   })
   .then(parsedData => {
-    log('info', `${ticker} - Retrieved ${parsedData.length} entries.`)
+    log('info', `${ticker} - Retrieved ${parsedData.length} days of data.`)
     resolve(parsedData);
   })
   .catch(e => { 

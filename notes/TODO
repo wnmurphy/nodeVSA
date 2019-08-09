@@ -16,3 +16,8 @@ TODO:
     - daily list of pivots to check.
     - notify me of impending float turnover.
   
+
+
+
+
+- Refactor calculateFloatTurnover to first load floats.json, and get float value from there rather than require it to be manually entered.

@@ -1,6 +1,5 @@
 const fs = require('fs');
 const log = require('./logger.js');
-const data = require('./stockData.js');
 
 function writeCSV (signalsArray) {
   // Create new file, overwrite existing old results.

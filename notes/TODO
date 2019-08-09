@@ -20,4 +20,12 @@ TODO:
 
 
 
+- Write a cron job to run scrapeFloat once per Sunday.
 - Refactor calculateFloatTurnover to first load floats.json, and get float value from there rather than require it to be manually entered.
+
+
+
+
+- cron updates floats every Sunday
+- cron updates stock historical data in database every afternoon
+- 

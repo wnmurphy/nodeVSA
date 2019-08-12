@@ -1,5 +1,5 @@
 const fs = require("fs");
-const state = require("./stockstate.js");
+const state = require("./stockData.js");
 
 
 // state.quotes[ticker]

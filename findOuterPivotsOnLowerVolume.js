@@ -29,7 +29,7 @@
 */
 
 const tickers = require('./stockList.js');
-const state = require('./src/stockstate.js');
+const state = require('./src/stockData.js');
 
 const createThrottle = require('./src/createThrottle.js');
 const throttle = createThrottle(1, 1900);
@@ -61,33 +61,39 @@ const filter = process.argv[2] ? [
   'signal.date === process.argv[2]'
 ].join(' && ') : undefined;
 
-(function() {
 
-  // Create an array containing a promise for each ticker request.
-  // Requests get individual catch blocks, so if one fails the rest can continue.
-  const tickerRequests = tickers.map(async (ticker) => {
-    try {
-      await throttle();
+// Create an array containing a promise for each ticker request.
+// Requests get individual catch blocks, so if one fails the rest can continue.
+const tickerRequests = tickers.map(async (ticker) => {
+  try {
+    await throttle();
 
-      // Check for local data for this ticker first before retrieval.
-      const localFile = disk.readStockDataFromDisk(ticker);
-      let parsedData = await fetchStock(ticker, needsFullRetrieval(localFile));
-      // If local data exists, merge with fetched data.
-      if (localFile.lastDateRetrieved && localFile.data) {
-        parsedData = disk.mergeNewAndExistingData(ticker, parsedData, localFile.data);
-      }
-      disk.writeStockDataToDisk(ticker, parsedData);
+    // Check for local data for this ticker first before retrieval.
+    const localFile = disk.readStockDataFromDisk(ticker);
+    let parsedData = await fetchStock(ticker, needsFullRetrieval(localFile));
 
-      // Initialize ticker in state, and add parsed data for processing.
-      initDataForStock(ticker, parsedData);
-      processDataForStock(ticker, parsedData);
-    } 
-    catch (e) {
-      log('warn', e, e.stack);
+    // If local data exists, merge with fetched data.
+    if (localFile.lastDateRetrieved && localFile.data) {
+      parsedData = disk.mergeNewAndExistingData(ticker, parsedData, localFile.data);
     }
-  });
+    
+    // Write to disk.
+    disk.writeStockDataToDisk(ticker, parsedData);
+
+    // Initialize ticker in state, and add parsed data for processing.
+    initDataForStock(ticker, parsedData);
+
+    // Process data.
+    processDataForStock(ticker, parsedData);
+  } 
+  catch (e) {
+    log('warn', e, e.stack);
+  }
+});
 
 
+// Main
+(function() {
   // Execute all ticker requests, perform any needed retries, and apply search filter to signals.
   Promise.all(tickerRequests)
     .then(() => {
@@ -140,13 +146,16 @@ function every(arr, filter) {
   return result;
 }
 
+
 function allResultsShort(result) {
   return result.trade === 'short';
 }
 
+
 function allResultsLong(result) {
   return result.trade === 'long';
 }
+
 
 // Returns true if localFile.data doesn't exist (data not fetched before), or if date ('2019-01-02') was more than 100 days ago, otherwise false.
 function needsFullRetrieval(localFile) {
@@ -158,10 +167,12 @@ function needsFullRetrieval(localFile) {
   return daysBetween(mostRecentDate, currentDate) > 100 ? true : false;
 }
 
+
 function initDataForStock(ticker, parsedData) {
   state.quotes[ticker] = {};
   state.quotes[ticker]['data'] = parsedData;
 }
+
 
 function processDataForStock(ticker, parsedData) {
   try {

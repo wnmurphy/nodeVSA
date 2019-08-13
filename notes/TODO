@@ -28,4 +28,13 @@ TODO:
 
 - cron updates floats every Sunday
 - cron updates stock historical data in database every afternoon
-- 
+
+
+
+Before fetch:
+  - Load current data for TICKER
+  - Check most recent date
+  - If most recent date is today, and data state is 'final', return local data.
+  - Otherwise, fetch partial.
+  - For any day of data, if NOW is after 1pm on day.date, mark day as final.
+  - Append to local data.

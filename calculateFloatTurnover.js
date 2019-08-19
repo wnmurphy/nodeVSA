@@ -25,6 +25,7 @@ const getFloatTurnovers = (volByDate, totalFloat, startDate, reverse) => {
       return calculateCycles(daysSubset, totalFloat, reverse);
     }
   }
+  throw `${ticker} - Start date ${startDate} not found in data.`;
 };
 
 function calculateCycles(volByDate, totalFloat, reverse) {

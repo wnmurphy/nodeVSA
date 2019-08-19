@@ -194,3 +194,23 @@ I just need to add a check for:
 Complete turnovers of a ticker's floating shares, when calculated from a price extreme, often line up exactly dead on with major pivots. It's quite uncanny.
 
 I wonder whether there is some other indicator I can check to see whether a turnover will result in a major price move, or whether it will be a 'nothing' turnover.
+
+
+
+
+
+
+
+
+
+1. Get a stable source of floating shares. (Look at scraping Yahoo Finance),
+2. Each day, run a script that:
+  - retrieves this total float for each stock (how often does it really change?)
+  - retrieves stock data for each stock.
+  - identifies the last major pivot for each stock.
+  - starts calculating float turnover from that pivot for that stock.
+  - generates a list of stocks with 96+% turnover.
+  - scans for recent outer pivots on lower volume.
+  - returns a list of any stock approaching 100% turnover that also has an outer pivot on lower volume.
+  - sends a text message to me with the results at 12:30pm.
+3. Place trades, 
